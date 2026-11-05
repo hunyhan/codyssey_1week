@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개발 작업실 설명서</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>개발 작업실 설명서</h1>
+  <p>터미널, Docker, Git을 쓸 때 찾아보는 문서입니다. 주제마다 핵심을 먼저 적고, 심화 내용은 접어 두었습니다.</p>
+  <a class="cta" href="glossary.html">용어집 바로가기 →</a>
+</header>
+
+<nav class="toc" aria-label="목차">
+  <a href="#env">실행 환경</a>
+  <a href="#path">경로와 터미널</a>
+  <a href="#perm">권한</a>
+  <a href="#docker">Docker 구조</a>
+  <a href="#image">커스텀 이미지</a>
+  <a href="#ops">컨테이너 운영</a>
+  <a href="#port">포트 매핑</a>
+  <a href="#bind">바인드 마운트</a>
+  <a href="#volume">볼륨</a>
+  <a href="#git">Git과 GitHub</a>
+</nav>
+
+<main>
+  <section id="env">
+    <h2>실행 환경</h2>
+    <table>
+      <tr><th>구성</th><th>역할</th></tr>
+      <tr><td>Windows</td><td>내 컴퓨터의 OS. PowerShell, VSCode, Docker Desktop을 실행한다</td></tr>
+      <tr><td>WSL2</td><td>Windows 안에서 리눅스를 실행하는 기능</td></tr>
+      <tr><td>Ubuntu-24.04</td><td>WSL2에 설치한 리눅스 배포판</td></tr>
+      <tr><td>Git Bash</td><td>Windows에서 쓰는 bash 터미널. 프롬프트에 <code>MINGW64</code>가 보인다</td></tr>
+    </table>
+    <p>Windows와 Ubuntu는 사용자, 프로그램, 설정이 따로 있다. 지금 어느 쪽에 있는지는 프롬프트로 확인한다.</p>
+    <details>
+      <summary>심화: 어디서 실행되는 프로그램인지 확인하기</summary>
+      <pre><code>which git      # /usr/bin/git 이면 Ubuntu 패키지
+which docker   # Docker Desktop의 WSL integration이 넣은 파일을 쓴다
+wsl --list --verbose   # 설치한 배포판과 상태 보기 (PowerShell)
+wsl --list --online    # 설치할 수 있는 배포판 보기 (PowerShell)</code></pre>
+      <p><code>/mnt/c/</code>로 시작하는 프로그램 경로는 Windows 쪽 파일이다.</p>
+    </details>
+  </section>
+
+  <section id="path">
+    <h2>경로와 터미널</h2>
+    <table>
+      <tr><th>구분</th><th>뜻</th><th>예</th></tr>
+      <tr><td>절대 경로</td><td><code>/</code>부터 시작한다. 어디서 실행해도 같은 곳을 가리킨다</td><td><code>/usr/share/nginx/html</code></td></tr>
+      <tr><td>상대 경로</td><td>지금 위치를 기준으로 찾아간다</td><td><code>site/index.html</code></td></tr>
+      <tr><td><code>.</code> / <code>..</code></td><td>지금 폴더 / 한 단계 위 폴더</td><td><code>cd ..</code></td></tr>
+      <tr><td><code>~</code></td><td>내 홈 폴더</td><td><code>cd ~</code></td></tr>
+    </table>
+    <h3>자주 쓰는 명령</h3>
+    <table>
+      <tr><th>명령</th><th>하는 일</th></tr>
+      <tr><td><code>pwd</code></td><td>지금 위치 보기</td></tr>
+      <tr><td><code>ls -a</code></td><td>숨김 파일까지 목록 보기</td></tr>
+      <tr><td><code>cd 폴더</code></td><td>폴더 이동</td></tr>
+      <tr><td><code>mkdir -p 경로</code></td><td>폴더 만들기. 중간 폴더도 함께 만든다</td></tr>
+      <tr><td><code>touch 파일</code></td><td>빈 파일 만들기</td></tr>
+      <tr><td><code>cat 파일</code></td><td>파일 내용 보기</td></tr>
+      <tr><td><code>cp 원본 대상</code></td><td>복사. 원본이 남는다. 폴더는 <code>-r</code></td></tr>
+      <tr><td><code>mv 원본 대상</code></td><td>옮기기, 이름 바꾸기. 원본이 남지 않는다</td></tr>
+      <tr><td><code>rm 파일</code></td><td>삭제. 폴더는 <code>-r</code>. 휴지통으로 가지 않는다</td></tr>
+      <tr><td><code>echo 글자 &gt; 파일</code></td><td>파일에 덮어쓰기. <code>&gt;&gt;</code>는 이어 붙이기</td></tr>
+    </table>
+    <p>입력은 <kbd>Tab</kbd>으로 완성하고, 지난 명령은 <kbd>↑</kbd>나 <kbd>Ctrl</kbd>+<kbd>R</kbd>로 불러온다.</p>
+    <details>
+      <summary>심화: Windows와 Ubuntu 사이의 경로</summary>
+      <table>
+        <tr><th>어디서</th><th>어디를 볼 때</th><th>경로</th></tr>
+        <tr><td>Ubuntu</td><td>Windows <code>C:\Users</code></td><td><code>/mnt/c/Users</code></td></tr>
+        <tr><td>Ubuntu</td><td>Windows <code>D:\</code></td><td><code>/mnt/d</code></td></tr>
+        <tr><td>Windows 탐색기</td><td>Ubuntu 홈</td><td><code>\\wsl.localhost\Ubuntu-24.04\home\사용자</code></td></tr>
+        <tr><td>Git Bash</td><td>Windows <code>C:\Users</code></td><td><code>/c/Users</code></td></tr>
+      </table>
+      <p>이름이 <code>.</code>으로 시작하는 파일은 숨김 파일이다. 그래서 <code>ls</code>에는 안 보이고 <code>ls -a</code>에 보인다.</p>
+    </details>
+  </section>
+
+  <section id="perm">
+    <h2>권한</h2>
+    <p><code>ls -l</code>의 맨 앞 칸은 종류 1글자와 권한 9글자다. 권한은 3글자씩 주인, 그룹, 기타 사용자 순서로 읽는다.</p>
+    <pre><code>-rw-r--r--   파일, 주인 rw-, 그룹 r--, 기타 r--  = 644
+drwxr-xr-x   폴더, 주인 rwx, 그룹 r-x, 기타 r-x  = 755</code></pre>
+    <table>
+      <tr><th>글자</th><th>숫자</th><th>파일에서</th><th>폴더에서</th></tr>
+      <tr><td><code>r</code></td><td>4</td><td>읽기</td><td>목록 보기</td></tr>
+      <tr><td><code>w</code></td><td>2</td><td>쓰기</td><td>안에서 만들기, 지우기</td></tr>
+      <tr><td><code>x</code></td><td>1</td><td>실행</td><td>들어가기 (<code>cd</code>)</td></tr>
+    </table>
+    <p>숫자는 묶음마다 더한다. <code>rwx</code> = 7, <code>rw-</code> = 6, <code>r-x</code> = 5, <code>r--</code> = 4.</p>
+    <pre><code>chmod 644 a.txt     # 숫자로 한 번에 지정
+chmod g+w a.txt     # 그룹에 쓰기 추가 (664)
+chmod u-x test      # 주인의 들어가기 권한 빼기</code></pre>
+    <details>
+      <summary>심화: 권한 에러 읽기</summary>
+      <table>
+        <tr><th>화면</th><th>원인</th></tr>
+        <tr><td><code>permission denied ... docker.sock</code></td><td><code>docker.sock</code>은 <code>root docker</code> 소유이고 그룹까지만 쓸 수 있다. <code>groups</code>에 <code>docker</code>가 없는 창에서 난다. 다시 접속하면 반영된다</td></tr>
+        <tr><td><code>chmod</code>의 <code>Operation not permitted</code></td><td><code>chmod</code>는 파일 주인이나 관리자만 할 수 있다. <code>/mnt/d</code> 파일은 주인이 <code>root</code>로 보여 거절된다</td></tr>
+      </table>
+    </details>
+  </section>
+
+  <section id="docker">
+    <h2>Docker 구조</h2>
+    <p class="flow"><span>docker 명령 (클라이언트)</span><span>docker.sock</span><span>데몬</span><span>이미지·컨테이너</span></p>
+    <p>내가 입력하는 <code>docker</code>는 클라이언트다. 실제 일은 데몬이 한다. 데몬은 Docker Desktop이 켜 둔 <code>docker-desktop</code> 배포판 안에 있고, 결과는 같은 길로 돌아온다.</p>
+    <table>
+      <tr><th>명령</th><th>확인하는 것</th></tr>
+      <tr><td><code>docker --version</code></td><td>클라이언트 버전</td></tr>
+      <tr><td><code>docker info</code></td><td>데몬 연결과 데몬이 관리하는 것</td></tr>
+    </table>
+  </section>
+
+  <section id="image">
+    <h2>커스텀 이미지</h2>
+    <table>
+      <tr><th>구분</th><th>뜻</th></tr>
+      <tr><td>이미지</td><td>읽기 전용 틀. 환경과 파일이 들어 있다</td></tr>
+      <tr><td>컨테이너</td><td>이미지로 실행한 것 하나. 이미지 하나로 여러 개 만들 수 있다</td></tr>
+      <tr><td>Dockerfile</td><td>이미지를 만드는 순서를 적은 파일</td></tr>
+    </table>
+    <pre><code># 이 저장소의 Dockerfile
+FROM nginx
+COPY site/ /usr/share/nginx/html</code></pre>
+    <table>
+      <tr><th>줄</th><th>뜻</th></tr>
+      <tr><td><code>FROM</code></td><td>베이스 이미지를 고른다. 실행 명령도 그대로 물려받는다</td></tr>
+      <tr><td><code>COPY</code></td><td>빌드 폴더의 파일을 이미지 안으로 복사한다</td></tr>
+    </table>
+    <pre><code>cd my-nginx
+docker build -t my-nginx:v3 .                         # 이미지 만들기
+docker run -d --name my-nginx-v3 -p 8083:80 my-nginx:v3  # 컨테이너 실행
+curl localhost:8083                                   # 응답 확인</code></pre>
+    <p><code>site/</code>를 고치면 이미지 안의 파일은 그대로다. 다시 <code>docker build</code>해야 반영된다.</p>
+    <details>
+      <summary>심화: 빌드할 때 알아 둘 것</summary>
+      <ul>
+        <li><code>docker build</code> 끝의 <code>.</code>은 지금 폴더를 빌드 폴더로 Docker에 넘긴다는 뜻이다. <code>COPY</code>의 앞 경로는 이 폴더 안에서 찾는다.</li>
+        <li><code>my-nginx</code> 폴더에서 빌드할 때 <code>cat site/index.html</code>로 열리는 파일은 <code>COPY site/index.html ...</code>로 쓸 수 있다.</li>
+        <li><code>/home/...</code>이나 <code>/mnt/d/...</code>처럼 빌드 폴더 밖의 파일은 가져올 수 없다. <code>/</code>로 시작해도 빌드 폴더 안에서 찾으므로 <code>not found</code>가 난다.</li>
+        <li><code>COPY</code>의 뒤 경로는 이미지 안의 위치다.</li>
+        <li><code>CACHED</code>는 줄과 쓰는 파일이 그대로라서 이전 결과를 다시 썼다는 뜻이다.</li>
+        <li>NGINX는 <code>/etc/nginx/conf.d/default.conf</code>의 <code>root</code> 폴더에서 <code>index</code> 파일을 찾아 보낸다. 그래서 <code>/usr/share/nginx/html</code>에 <code>index.html</code>을 넣는다.</li>
+        <li>페이지가 가리키는 CSS, 이미지까지 함께 넣어야 한다. 빠지면 꾸밈이 없는 페이지나 <code>404</code>가 나온다.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="ops">
+    <h2>컨테이너 운영</h2>
+    <table>
+      <tr><th>명령</th><th>하는 일</th></tr>
+      <tr><td><code>docker images</code></td><td>이미지 목록</td></tr>
+      <tr><td><code>docker ps</code></td><td>실행 중인 컨테이너</td></tr>
+      <tr><td><code>docker ps -a</code></td><td>멈춘 컨테이너까지</td></tr>
+      <tr><td><code>docker logs 이름</code></td><td>컨테이너 로그. 멈춘 컨테이너도 볼 수 있다</td></tr>
+      <tr><td><code>docker stats</code></td><td>실행 중인 컨테이너의 자원 사용량</td></tr>
+      <tr><td><code>docker run</code></td><td>새 컨테이너를 만들고 실행</td></tr>
+      <tr><td><code>docker stop 이름</code></td><td>멈춤. 지워지지 않는다</td></tr>
+      <tr><td><code>docker start 이름</code></td><td>이미 있는 컨테이너를 다시 실행</td></tr>
+      <tr><td><code>docker rm 이름</code></td><td>컨테이너 삭제. 이미지는 남는다</td></tr>
+    </table>
+    <p>STATUS는 메인 프로그램을 따른다. 메인 프로그램이 끝나면 <code>Exited</code>, 돌고 있으면 <code>Up</code>이다.</p>
+    <details>
+      <summary>심화: 실행 중인 컨테이너에 들어가기</summary>
+      <table>
+        <tr><th>명령</th><th>동작</th><th><code>exit</code>하면</th></tr>
+        <tr><td><code>docker exec -it 이름 bash</code></td><td>새 프로그램을 따로 띄운다</td><td>그 프로그램만 끝나고 컨테이너는 <code>Up</code></td></tr>
+        <tr><td><code>docker attach 이름</code></td><td>메인 프로그램에 연결한다</td><td>메인이 끝나 <code>Exited</code>가 될 수 있다</td></tr>
+      </table>
+      <p>상태를 확인할 때는 <code>exec</code>가 안전하다.</p>
+    </details>
+  </section>
+
+  <section id="port">
+    <h2>포트 매핑</h2>
+    <p>컨테이너는 격리되어 있어서 포트를 연결해야 내 컴퓨터에서 접속할 수 있다.</p>
+    <pre><code>-p 8081:80
+   호스트:컨테이너
+   브라우저에서 localhost:8081로 들어오면 컨테이너의 80번으로 보낸다</code></pre>
+    <table>
+      <tr><th><code>docker ps</code>의 PORTS</th><th>뜻</th></tr>
+      <tr><td><code>0.0.0.0:8081-&gt;80/tcp</code></td><td>연결됨. 내 컴퓨터의 8081번으로 들어온다</td></tr>
+      <tr><td><code>80/tcp</code></td><td>화살표가 없다. 내 컴퓨터에서 들어갈 수 없다</td></tr>
+    </table>
+    <details>
+      <summary>심화: 접속이 안 될 때</summary>
+      <table>
+        <tr><th>화면</th><th>뜻</th></tr>
+        <tr><td><code>port is already allocated</code></td><td>호스트 포트가 이미 쓰이는 중이다. 컨테이너 포트는 각자 80이어도 되지만 호스트 포트는 겹칠 수 없다</td></tr>
+        <tr><td><code>ERR_CONNECTION_REFUSED</code></td><td>그 포트에서 기다리는 프로그램이 없다</td></tr>
+        <tr><td><code>404 Not Found</code></td><td>서버는 답했지만 그 파일이 없다</td></tr>
+      </table>
+      <table>
+        <tr><th>PORTS 앞 주소</th><th>들어올 수 있는 곳</th></tr>
+        <tr><td><code>127.0.0.1</code></td><td>내 컴퓨터 안에서만</td></tr>
+        <tr><td><code>0.0.0.0</code></td><td>내 컴퓨터의 모든 주소로. 외부 공개에 주의한다</td></tr>
+      </table>
+    </details>
+  </section>
+
+  <section id="bind">
+    <h2>바인드 마운트</h2>
+    <p>내 컴퓨터의 폴더를 컨테이너 안의 경로에 그대로 연결한다. 파일을 고치면 빌드 없이 새로고침만으로 반영된다.</p>
+    <pre><code>docker run -d --name my-nginx-bind -p 8082:80 \
+  -v /home/사용자/my-nginx/site:/usr/share/nginx/html nginx</code></pre>
+    <pre><code>-v 호스트경로:컨테이너경로
+   호스트경로는 / 로 시작하는 절대 경로로 쓴다</code></pre>
+    <table>
+      <tr><th></th><th>이미지에 <code>COPY</code></th><th>바인드 마운트</th></tr>
+      <tr><td>파일 위치</td><td>이미지 안에 복사본</td><td>내 컴퓨터 폴더</td></tr>
+      <tr><td>파일을 고치면</td><td>그대로. 다시 <code>docker build</code>해야 함</td><td>바로 반영됨</td></tr>
+      <tr><td>쓰임</td><td>완성한 환경을 전달할 때</td><td>만들면서 바로 확인할 때</td></tr>
+    </table>
+    <p>검증은 호스트에서 파일을 고친 뒤 <code>cat</code>으로 내용을 보고, 브라우저를 새로고침해 전후를 비교한다.</p>
+  </section>
+
+  <section id="volume">
+    <h2>볼륨</h2>
+    <p>컨테이너 안에 저장한 파일은 컨테이너를 지우면 사라진다. 남겨야 할 데이터는 볼륨에 둔다.</p>
+    <pre><code>docker volume create mydata                          # 볼륨 만들기
+docker run -it --name test1 -v mydata:/data ubuntu bash   # /data에 연결
+docker rm test1                                      # 컨테이너 삭제
+docker run -it --name test2 -v mydata:/data ubuntu bash   # 같은 볼륨 연결</code></pre>
+    <p><code>test2</code>의 <code>/data</code>에 파일이 남아 있으면 영속성이 확인된 것이다.</p>
+    <table>
+      <tr><th>저장 위치</th><th>컨테이너를 지우면</th><th>쓰임</th></tr>
+      <tr><td>컨테이너 안</td><td>사라짐</td><td>잠깐 쓰는 파일</td></tr>
+      <tr><td>볼륨 <code>-v 이름:경로</code></td><td>남음</td><td>남겨야 할 데이터</td></tr>
+      <tr><td>바인드 마운트 <code>-v /폴더:경로</code></td><td>남음 (내 폴더에 있음)</td><td>바로 고쳐 보는 파일</td></tr>
+    </table>
+    <details>
+      <summary>심화: 언제 무엇을 쓰나</summary>
+      <ul>
+        <li><code>-v</code> 뒤가 <code>/</code>로 시작하면 바인드 마운트, 이름이면 볼륨이다.</li>
+        <li>DB는 볼륨에 데이터를 두면, 새 이미지로 컨테이너를 만든 뒤 같은 볼륨을 연결해 데이터를 이어 쓸 수 있다.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="git">
+    <h2>Git과 GitHub</h2>
+    <table>
+      <tr><th></th><th>Git</th><th>GitHub</th></tr>
+      <tr><td>역할</td><td>변경 기록을 남기는 버전 관리 도구</td><td>저장소를 올려 함께 작업하는 서비스</td></tr>
+      <tr><td>위치</td><td>내 컴퓨터 (<code>.git</code>)</td><td>인터넷 서버</td></tr>
+      <tr><td>인터넷</td><td>없어도 커밋할 수 있다</td><td>푸시, 풀에 필요하다</td></tr>
+    </table>
+    <p class="flow"><span>파일 수정</span><span>git add</span><span>git commit</span><span>git push</span><span>GitHub 확인</span></p>
+    <pre><code>git status                        # 지금 상태 보기
+git add README.md                 # 다음 커밋에 넣을 파일 고르기
+git commit -m "무엇을 바꿨는지"     # 로컬에 기록
+git push                          # GitHub로 올리기
+git log                           # 커밋 기록 보기</code></pre>
+    <table>
+      <tr><th><code>git status</code>의 표시</th><th>뜻</th></tr>
+      <tr><td><code>Untracked files</code></td><td>Git이 아직 기록한 적 없는 새 파일</td></tr>
+      <tr><td><code>Changes not staged for commit</code></td><td>수정됐지만 커밋에 고르지 않음</td></tr>
+      <tr><td><code>Changes to be committed</code></td><td>다음 커밋에 들어감</td></tr>
+      <tr><td><code>ahead of 'origin/main'</code></td><td>올리지 않은 커밋이 있음</td></tr>
+    </table>
+    <p>푸시는 커밋을 공유할 뿐 아무것도 실행하지 않는다. 팀원은 <code>pull</code>로 받아 직접 빌드하고 실행한다.</p>
+    <details>
+      <summary>심화: 연결과 설정</summary>
+      <table>
+        <tr><th>명령</th><th>하는 일</th></tr>
+        <tr><td><code>git clone 주소</code></td><td>저장소를 기록까지 복제한다</td></tr>
+        <tr><td><code>git remote -v</code></td><td><code>origin</code>의 주소를 본다</td></tr>
+        <tr><td><code>ssh -T git@github.com</code></td><td>SSH 키 연결을 확인한다</td></tr>
+        <tr><td><code>git config 항목</code></td><td>실제로 쓰이는 값 하나를 본다</td></tr>
+        <tr><td><code>git config --show-origin 항목</code></td><td>그 값이 어느 파일에서 왔는지 본다</td></tr>
+      </table>
+      <ul>
+        <li>설정은 system, global, local 순서로 범위가 좁아지고, 겹치면 좁은 쪽 값이 쓰인다.</li>
+        <li><code>--global</code> 없이 설정하면 그 저장소의 <code>.git/config</code>에만 저장된다.</li>
+        <li><code>origin/main</code>은 GitHub의 <code>main</code> 위치를 내 컴퓨터가 기억해 둔 것이다.</li>
+        <li>커밋의 이메일은 공개된다. 공개 저장소는 GitHub의 noreply 주소를 쓸 수 있다.</li>
+        <li>비밀키, 토큰, 비밀번호는 커밋하지 않는다. 한 번 올라간 기록은 설정을 바꿔도 남는다.</li>
+      </ul>
+    </details>
+  </section>
+</main>
+</body>
+</html>
