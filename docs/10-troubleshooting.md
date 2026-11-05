@@ -229,3 +229,11 @@ All your projects and agents, in one window.
 ```
 
 </details>
+
+## 7. `port is already allocated`
+
+- **문제:** `docker run -d --name conflict-test -p 8083:80 nginx`가 `Bind for 0.0.0.0:8083 failed: port is already allocated`로 실패했다.
+- **가설:** 호스트 8083번을 다른 컨테이너나 프로그램이 쓰고 있다.
+- **확인:** `docker ps --filter publish=8083`에 `my-nginx-v3`가 나왔다. Windows의 `netstat -ano`와 `Get-Process`로 `com.docker.backend`, `wslrelay`가 듣고 있는 것도 확인했다.
+- **해결:** 프로세스를 끄지 않고 실패한 컨테이너를 `docker rm`으로 지운 뒤 `-p 8084:80`으로 실행했다. `curl -sSI localhost:8084`가 `200 OK`를 반환했다.
+- **증거:** [포트 충돌 진단 절차](06-port-mapping.md#포트-충돌-진단-절차)

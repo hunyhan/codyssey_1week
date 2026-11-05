@@ -89,6 +89,10 @@ $ diff -r /mnt/d/OneDrive/05_Codyssey/01_Week/site site
 
 복사 후 `diff`는 아무것도 출력하지 않았습니다. 두 폴더의 내용이 같다는 뜻입니다.
 
+## 변경 흐름
+
+`site/` 수정 → 저장소로 복사 → `docker build` → 기존 컨테이너 `stop`, `rm` → 새 이미지로 `run`.
+
 ## 결론
 
 이미지는 틀이고, `FROM`이 그 틀을 가져온다. `COPY`는 내가 보여주고 싶은 파일을 nginx가 내보내는 폴더 경로에 붙여 넣는다. `CACHED`는 바뀌지 않은 단계는 이전 결과를 다시 쓴다는 뜻이다.
